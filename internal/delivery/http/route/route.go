@@ -12,6 +12,7 @@ func SetupRoutes(app *fiber.App, userService service.UserService, transactionSer
 	// Initialize http
 	userController := httpdelivery.NewUserController(userService)
 	transactionController := httpdelivery.NewTransactionController(transactionService)
+	app.Use(middleware.ErrorHandlerMiddleware)
 
 	// Public routes
 	app.Post("/api/register", userController.Register)

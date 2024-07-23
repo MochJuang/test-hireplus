@@ -1,7 +1,7 @@
 package service
 
 import (
-	"fmt"
+	"errors"
 	"hireplus-project/internal/config"
 	"hireplus-project/internal/entity"
 	"hireplus-project/internal/repository"
@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	e "hireplus-project/internal/exception"
 )
 
 type UserService interface {
@@ -38,11 +39,11 @@ func (s *userService) Register(firstName, lastName, phone, address, pin string) 
 		CreatedAt:   time.Now(),
 	}
 	if err := s.userRepo.CreateUser(user); err != nil {
-		return nil, err
+		return nil, e.Internal(err)
 	}
 
 	if err := s.userRepo.CreateUserBalance(user.ID); err != nil {
-		return nil, err
+		return nil, e.Internal(err)
 	}
 
 	return user, nil
@@ -51,25 +52,23 @@ func (s *userService) Register(firstName, lastName, phone, address, pin string) 
 func (s *userService) Login(phone, pin string) (string, string, error) {
 	user, err := s.userRepo.GetUserByPhone(phone)
 	if err != nil {
-		return "", "", fmt.Errorf("phone number or PIN is incorrect")
+		return "", "", e.Validation(errors.New("phone number or PIN is incorrect"))
 	}
 
 	if user.Pin != pin {
-		return "", "", fmt.Errorf("phone number or PIN is incorrect")
+		return "", "", e.Validation(errors.New("phone number or PIN is incorrect"))
 	}
 
 	jwtKey := s.config.JWTSecret
 
 	accessToken, err := utils.GenerateToken(user.ID, jwtKey)
 	if err != nil {
-		fmt.Println("error generate access token:", err.Error())
-		return "", "", err
+		return "", "", e.Internal(err)
 	}
 
 	refreshToken, err := utils.GenerateToken(user.ID, jwtKey)
 	if err != nil {
-		fmt.Println("error generate refresh token", err.Error())
-		return "", "", err
+		return "", "", e.Internal(err)
 	}
 
 	return accessToken, refreshToken, nil
@@ -78,7 +77,7 @@ func (s *userService) Login(phone, pin string) (string, string, error) {
 func (s *userService) UpdateProfile(userID, firstName, lastName, address string) (*entity.User, error) {
 	user, err := s.userRepo.GetUserByID(userID)
 	if err != nil {
-		return nil, err
+		return nil, e.Internal(err)
 	}
 
 	user.FirstName = firstName
@@ -87,7 +86,7 @@ func (s *userService) UpdateProfile(userID, firstName, lastName, address string)
 	user.UpdatedAt = time.Now()
 
 	if err := s.userRepo.UpdateUser(user); err != nil {
-		return nil, err
+		return nil, e.Internal(err)
 	}
 
 	return user, nil

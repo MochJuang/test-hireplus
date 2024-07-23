@@ -1,7 +1,9 @@
 package controller
 
 import (
+	"fmt"
 	"github.com/gofiber/fiber/v2"
+	e "hireplus-project/internal/exception"
 	"hireplus-project/internal/model"
 	"hireplus-project/internal/service"
 )
@@ -17,12 +19,13 @@ func NewUserController(userService service.UserService) *UserController {
 func (h *UserController) Register(c *fiber.Ctx) error {
 	var req model.UserRegisterRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": err.Error()})
+		return e.Validation(err)
 	}
 
 	user, err := h.userService.Register(req.FirstName, req.LastName, req.PhoneNumber, req.Address, req.Pin)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": err.Error()})
+		fmt.Println(err)
+		return err
 	}
 
 	return c.JSON(fiber.Map{"status": "SUCCESS", "result": user})
@@ -31,12 +34,12 @@ func (h *UserController) Register(c *fiber.Ctx) error {
 func (h *UserController) Login(c *fiber.Ctx) error {
 	var req model.UserLoginRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": err.Error()})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "Invalid request"})
 	}
 
 	accessToken, refreshToken, err := h.userService.Login(req.PhoneNumber, req.Pin)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": err.Error()})
+		return err
 	}
 
 	return c.JSON(fiber.Map{"status": "SUCCESS", "access_token": accessToken, "refresh_token": refreshToken})

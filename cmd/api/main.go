@@ -45,6 +45,8 @@ func main() {
 	// Setup routes
 	route.SetupRoutes(app, userService, transactionService, cfg)
 
+	// Setup error handler middleware
+
 	// Start server
 	log.Fatal(app.Listen(cfg.ServerAddress))
 }
