@@ -34,7 +34,7 @@ func (h *UserController) Register(c *fiber.Ctx) error {
 func (h *UserController) Login(c *fiber.Ctx) error {
 	var req model.UserLoginRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "Invalid request"})
+		return e.Validation(err)
 	}
 
 	accessToken, refreshToken, err := h.userService.Login(req.PhoneNumber, req.Pin)
